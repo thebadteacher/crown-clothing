@@ -5,5 +5,5 @@ import cartReducer from './cart/cart.reducer';
 
 export default combineReducers({
 	user: userReducer,
-	cartIcon: cartReducer,
+	cart: cartReducer,
 });
