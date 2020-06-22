@@ -14,6 +14,8 @@ const config = {
 	appId: '1:293114275649:web:8f30f3ec0bc89c0c9b23c0',
 	measurementId: 'G-YC41TCWRPH',
 };
+// Here core app is initialized
+firebase.initializeApp(config);
 
 // Adding the user to the DB
 export const createUserProfileDocument = async (userAuth, additionalData) => {
@@ -42,8 +44,45 @@ export const createUserProfileDocument = async (userAuth, additionalData) => {
 	return userRef;
 };
 
-// Here core app is initialized
-firebase.initializeApp(config);
+export const addCollectionAndDocuments = async (
+	collectionKey,
+	objectsToAdd
+) => {
+	const collectionRef = firestore.collection(collectionKey);
+	console.log(collectionRef);
+
+	const batch = firestore.batch();
+	objectsToAdd.forEach((object) => {
+		const newDocRef = collectionRef.doc();
+		batch.set(newDocRef, object);
+	});
+
+	return await batch.commit();
+};
+
+export const convertCollectionsSnapshotToMap = (collections) => {
+	//This gives us an array with object as we want them to appear in our state.
+	// NOTE: I hate firebase
+	const transformedCollection = collections.docs.map((doc) => {
+		const { title, items } = doc.data();
+
+		return {
+			routeName: encodeURI(title.toLowerCase()),
+			id: doc.id,
+			title,
+			items,
+		};
+	});
+
+	//now we take the array we built. Each iteration adds into the accumulator the collections under the key of the name of that collection.
+	// { hats: {hatsCollection}, etc. } ** No idea why not use routeName here **
+
+	return transformedCollection.reduce((accumulator, collection) => {
+		accumulator[collection.title.toLowerCase()] = collection;
+		return accumulator;
+	}, {});
+	//The empty object at the end? That's our initial accumulator. Read docs on .reduce /facepalm
+};
 
 //...and now the services to use
 export const auth = firebase.auth();
